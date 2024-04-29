@@ -2,27 +2,9 @@
 
 require 'rest-client'
 
-# require 'zenti/api_operations/list'
-# require 'zenti/api_operations/create'
-# require 'zenti/api_operations/retrieve'
-# require 'zenti/api_operations/update'
-# require 'zenti/api_operations/delete'
-# 
-# require 'zenti/api_resource'
-# require 'zenti/order'
-# require 'zenti/customer'
-# require 'zenti/fulfillment'
-# require 'zenti/shipment'
-# require 'zenti/carrier'
-# require 'zenti/store'
-# require 'zenti/warehouse'
-# require 'zenti/product'
-# require 'zenti/tag'
-# require 'zenti/webhook'
-
 module Zenti
 
-  API_BASE = "https://ssapi.zenti.com/"
+  API_BASE = "https://bankcardconnect.transactiongateway.com/api/transact.php"
 
   class ZentiError < StandardError
   end
@@ -42,33 +24,19 @@ module Zenti
   end
 
   class << self
-    def username
-      defined? @username and @username or raise(
-        ConfigurationError, "Zenti username not configured"
+    def security_key
+      defined? @security_key and @security_key or raise(
+        ConfigurationError, "Zenti security_key not configured"
       )
     end
 
-    attr_writer :username
+    attr_writer :security_key
 
-    def password
-      defined? @password and @password or raise(
-        ConfigurationError, "Zenti password not configured"
-      )
-    end
-
-    attr_writer :password
-
-    def request method, resource, params = {}
-      ss_username = params[:username] || Zenti.username
-      ss_password = params[:password] || Zenti.password
-
-      params.except!(:username, :password)
+    def request method, params = {}
+      params[:security_key] = Zenti.security_key
 
       defined? method or raise(
         ArgumentError, "Request method has not been specified"
-      )
-      defined? resource or raise(
-        ArgumentError, "Request resource has not been specified"
       )
       if method == :get
         headers = {:accept => :json, content_type: :json}.merge({params: params})
@@ -79,9 +47,7 @@ module Zenti
       end
       RestClient::Request.new({
                                 method: method,
-                                url: API_BASE + resource,
-                                user: ss_username,
-                                password: ss_password,
+                                url: API_BASE,
                                 payload: payload ? payload.to_json : nil,
                                 headers: headers
                               }).execute do |response, request, result|
